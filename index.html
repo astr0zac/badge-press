@@ -1,0 +1,306 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Badge Press</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='5' fill='none' stroke='%23b42318' stroke-width='1.5'/%3E%3Cpath d='M8 1v14M1 8h14' stroke='%23b42318' stroke-width='1'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header>
+    <div class="brand">
+      <span class="logo" aria-hidden="true"></span>
+      <div>
+        <div class="brand-name">Badge Press</div>
+        <p class="brand-sub" id="brandSub">2 × 3 in</p>
+      </div>
+    </div>
+    <nav class="modes" aria-label="Mode">
+      <button type="button" id="modeDesign" class="active" aria-pressed="true">Design</button>
+      <button type="button" id="modeMake" aria-pressed="false">Make</button>
+    </nav>
+    <div class="status" id="status">Loading…</div>
+  </header>
+
+  <section id="viewDesign" class="design-shell">
+    <aside class="panel left">
+      <div class="stack">
+        <h2>Templates</h2>
+        <button type="button" class="btn" id="newToggle">New template</button>
+        <form id="newForm" class="stack" hidden>
+          <label class="lbl">Name
+            <input id="newName" type="text" maxlength="80" placeholder="Volunteer" autocomplete="off">
+          </label>
+          <label class="lbl">Size
+            <select id="newPreset">
+              <option value="2x3">2 × 3 in portrait</option>
+              <option value="3x2">3 × 2 in landscape</option>
+              <option value="cr80p">CR80 portrait (2.125 × 3.375)</option>
+              <option value="cr80l">CR80 landscape (3.375 × 2.125)</option>
+            </select>
+          </label>
+          <button type="submit" class="btn primary" id="newCreate">Create</button>
+        </form>
+        <div id="templateList" class="template-list"></div>
+        <div class="row">
+          <button type="button" class="btn small" id="exportTemplate">Save file</button>
+          <button type="button" class="btn small" id="importTemplate">Open file</button>
+          <input id="importFile" type="file" accept=".json,application/json" hidden>
+        </div>
+        <p class="note">Templates and photos stay in this browser on this computer.</p>
+      </div>
+    </aside>
+
+    <div class="stage" id="designStage">
+      <div class="stage-center" id="designCenter">
+        <div class="badge-frame" id="designFrame">
+          <canvas id="designCanvas"></canvas>
+          <svg class="grid" id="designGrid"></svg>
+          <div class="safe" id="designSafe" hidden></div>
+          <div class="overlay" id="designOverlay"></div>
+        </div>
+      </div>
+      <p class="meta" id="designMeta"></p>
+    </div>
+
+    <aside class="panel right">
+      <div class="stack">
+        <div class="group">
+          <h2>Template</h2>
+          <label class="lbl">Name
+            <input id="templateName" type="text" maxlength="80" autocomplete="off">
+          </label>
+          <label class="lbl">Preset
+            <select id="presetSelect">
+              <option value="2x3">2 × 3 in portrait</option>
+              <option value="3x2">3 × 2 in landscape</option>
+              <option value="cr80p">CR80 portrait (2.125 × 3.375)</option>
+              <option value="cr80l">CR80 landscape (3.375 × 2.125)</option>
+              <option value="custom">Custom size</option>
+            </select>
+          </label>
+          <div class="pair">
+            <label class="lbl">Width (in)
+              <input id="badgeWidth" type="number" min="0.5" max="12" step="any">
+            </label>
+            <label class="lbl">Height (in)
+              <input id="badgeHeight" type="number" min="0.5" max="12" step="any">
+            </label>
+          </div>
+        </div>
+
+        <div class="group">
+          <h2>Background</h2>
+          <div class="pair">
+            <label class="lbl">Color
+              <input id="bgColor" type="color" value="#f4efe6">
+            </label>
+            <label class="lbl">Fit
+              <select id="bgFit">
+                <option value="cover">Cover</option>
+                <option value="contain">Contain</option>
+                <option value="stretch">Stretch</option>
+              </select>
+            </label>
+          </div>
+          <div class="file-line">
+            <button type="button" class="btn small" id="bgPick">Upload PNG or SVG</button>
+            <button type="button" class="btn small" id="bgClear">Clear</button>
+            <input id="bgFile" type="file" accept=".png,.svg,image/png,image/svg+xml" hidden>
+          </div>
+          <div class="file-name" id="bgName">No background yet. Drop one on the badge.</div>
+        </div>
+
+        <div class="group">
+          <h2>Preview text</h2>
+          <label class="lbl">Sample name
+            <input id="sampleName" type="text" maxlength="80" autocomplete="off">
+          </label>
+          <label class="lbl" id="sampleSubtitleRow">Sample second line
+            <input id="sampleSubtitle" type="text" maxlength="80" autocomplete="off">
+          </label>
+          <div class="checks">
+            <label class="check"><input id="showSample" type="checkbox"> Sample photo</label>
+            <label class="check"><input id="showGrid" type="checkbox"> Grid</label>
+            <label class="check"><input id="showSafe" type="checkbox"> 0.06 in margin</label>
+          </div>
+          <p class="note">The sample photo is only a stand-in. Turn it off before a test print if you want the page clean.</p>
+        </div>
+
+        <div class="group">
+          <h2>Fields</h2>
+          <div id="fieldList" class="field-list">
+            <button type="button" class="field-pick" data-select="photo">Photo</button>
+            <button type="button" class="field-pick" data-select="name">Name</button>
+            <div class="field-pick-row">
+              <button type="button" class="field-pick" data-select="subtitle">Second line</button>
+              <label class="check"><input id="subtitleEnabled" type="checkbox"> On</label>
+            </div>
+          </div>
+          <div class="quad">
+            <label class="lbl">X
+              <input id="propX" type="number" step="0.01">
+            </label>
+            <label class="lbl">Y
+              <input id="propY" type="number" step="0.01">
+            </label>
+            <label class="lbl">W
+              <input id="propW" type="number" min="0.12" step="0.01">
+            </label>
+            <label class="lbl">H
+              <input id="propH" type="number" min="0.12" step="0.01">
+            </label>
+          </div>
+          <p class="note">Drag a field to place it. Arrow keys nudge. Shift nudges by 0.1 in.</p>
+        </div>
+
+        <div class="group" id="photoProps">
+          <h2>Photo</h2>
+          <label class="lbl">Shape
+            <select id="photoShape">
+              <option value="rect">Rectangle</option>
+              <option value="rounded">Rounded</option>
+              <option value="circle">Circle</option>
+            </select>
+          </label>
+          <label class="lbl" id="radiusRow">Corner radius (in)
+            <input id="photoRadius" type="number" min="0" max="2" step="0.01">
+          </label>
+          <div class="pair">
+            <label class="lbl">Border (pt)
+              <input id="photoBorder" type="number" min="0" max="20" step="0.5">
+            </label>
+            <label class="lbl">Border color
+              <input id="photoBorderColor" type="color" value="#ffffff">
+            </label>
+          </div>
+        </div>
+
+        <div class="group" id="textProps">
+          <h2>Text</h2>
+          <label class="lbl">Font
+            <select id="textFont"></select>
+          </label>
+          <div class="pair">
+            <label class="lbl">Size (pt)
+              <input id="textSize" type="number" min="6" max="120" step="1">
+            </label>
+            <label class="lbl">Color
+              <input id="textColor" type="color" value="#1c1915">
+            </label>
+          </div>
+          <div class="seg" id="alignSeg">
+            <button type="button" id="alignLeft">Left</button>
+            <button type="button" id="alignCenter">Center</button>
+            <button type="button" id="alignRight">Right</button>
+          </div>
+          <div class="checks">
+            <label class="check"><input id="textBold" type="checkbox"> Bold</label>
+            <label class="check"><input id="textItalic" type="checkbox"> Italic</label>
+            <label class="check"><input id="textUpper" type="checkbox"> Uppercase</label>
+            <label class="check"><input id="textAuto" type="checkbox"> Fit the box</label>
+          </div>
+          <label class="lbl">Tracking (pt)
+            <input id="textTracking" type="number" min="-2" max="40" step="0.5">
+          </label>
+        </div>
+
+        <div class="group">
+          <h2>Test page</h2>
+          <div class="row">
+            <button type="button" class="btn" id="testPng">Download PNG</button>
+            <button type="button" class="btn" id="testPrint">Print</button>
+          </div>
+          <p class="note">Prints at the badge size, 300 DPI. In the print dialog set scale to 100%, margins to none, and turn headers off.</p>
+        </div>
+      </div>
+    </aside>
+  </section>
+
+  <section id="viewMake" class="make-shell" hidden>
+    <div class="stage">
+      <div class="stage-center" id="makeCenter">
+        <div class="badge-frame" id="makeFrame">
+          <canvas id="makeCanvas"></canvas>
+        </div>
+      </div>
+      <p class="meta" id="makeMeta"></p>
+    </div>
+    <div class="export-bar">
+      <p class="hint" id="exportHint">Add a badge to export it.</p>
+      <button type="button" class="btn" id="btnPng" disabled>PNG</button>
+      <button type="button" class="btn" id="btnPdf" disabled>PDF</button>
+      <button type="button" class="btn primary" id="btnPrint" disabled>Print</button>
+    </div>
+    <aside class="panel right">
+      <div class="stack">
+        <h2>Badges</h2>
+        <label class="lbl">Template
+          <select id="makeTemplate"></select>
+        </label>
+        <label class="lbl">Name
+          <input id="personName" type="text" maxlength="80" autocomplete="off" placeholder="Alex Morgan">
+        </label>
+        <label class="lbl" id="subtitleRow">Second line
+          <input id="personSubtitle" type="text" maxlength="80" autocomplete="off" placeholder="Visitor">
+        </label>
+        <div class="drop" id="photoDrop">
+          <img id="photoPreview" alt="" hidden>
+          <strong>Photo</strong>
+          <span class="note">Drop an image, or browse.</span>
+          <div class="row">
+            <button type="button" class="btn small" id="photoBrowse">Browse</button>
+            <button type="button" class="btn small" id="cameraBtn">Camera</button>
+            <button type="button" class="btn small" id="photoClear" hidden>Remove</button>
+          </div>
+          <input id="photoFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" hidden>
+        </div>
+        <div id="focusRow" class="group" hidden>
+          <label class="lbl">Photo horizontal
+            <input id="focusX" type="range" min="0" max="1" step="0.01" value="0.5">
+          </label>
+          <label class="lbl">Photo vertical
+            <input id="focusY" type="range" min="0" max="1" step="0.01" value="0.35">
+          </label>
+        </div>
+        <div class="row">
+          <button type="button" class="btn primary" id="savePersonBtn" disabled>Add badge</button>
+          <button type="button" class="btn" id="anotherBtn" hidden>Add another</button>
+        </div>
+        <button type="button" class="btn small" id="manyToggle">Add many</button>
+        <div id="manyPanel" class="stack" hidden>
+          <label class="lbl">Names, one per line
+            <textarea id="manyNames" rows="5" placeholder="Alex Morgan&#10;Jordan Lee"></textarea>
+          </label>
+          <button type="button" class="btn" id="manyAddNames">Add these names</button>
+          <button type="button" class="btn" id="manyPhotosBtn">Add from photo files</button>
+          <input id="manyPhotosFile" type="file" accept="image/png,image/jpeg,image/webp,image/gif" multiple hidden>
+          <p class="note">Photo file names become the badge names.</p>
+        </div>
+        <div class="row">
+          <label class="check"><input id="selectAll" type="checkbox"> All</label>
+          <span class="hint" id="selectionMeta"></span>
+        </div>
+        <div id="personList" class="person-list"></div>
+        <p class="note" id="printTip">PDF pages match the badge size. For a card printer, choose a CR80 preset in Design. Print at 100% with margins and headers off.</p>
+      </div>
+    </aside>
+  </section>
+
+  <dialog id="cameraDialog">
+    <div class="stack">
+      <h2>Camera</h2>
+      <video id="cameraVideo" autoplay playsinline></video>
+      <div class="row">
+        <button type="button" class="btn primary" id="cameraCapture">Take photo</button>
+        <button type="button" class="btn" id="cameraCancel">Cancel</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script src="zip.js"></script>
+  <script src="pdf.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
